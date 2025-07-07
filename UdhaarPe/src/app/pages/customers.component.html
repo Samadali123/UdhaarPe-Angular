@@ -1,0 +1,211 @@
+<div class="customers-container" appScrollbar>
+  <div class="customers-header">
+    <h1>Customers</h1>
+    <p>Manage your customer information and transactions</p>
+  </div>
+
+  <div class="customers-controls">
+    <div class="search-box">
+      <input 
+        type="text" 
+        [(ngModel)]="searchTerm"
+        placeholder="Search customers by name..."
+        class="search-input"
+      />
+    </div>
+    <button class="add-customer-btn" (click)="openAddCustomer()">
+      <span>➕</span>
+      Add Customer
+    </button>
+  </div>
+
+  <div class="customers-list">
+    <div *ngIf="filteredCustomersWithFinancials.length === 0" class="empty-state">
+      <div class="empty-icon">👥</div>
+      <h3>No customers found</h3>
+      <p>{{ searchTerm ? 'No customers found matching "' + searchTerm + '". Try a different name.' : 'Add your first customer to get started' }}</p>
+    </div>
+
+    <div *ngFor="let customer of filteredCustomersWithFinancials" class="customer-card">
+      <div class="customer-info">
+        <div class="customer-header">
+          <h3>{{ customer.name }}</h3>
+          <span class="customer-status" [class.active]="customer.active">
+            {{ customer.active ? 'Active' : 'Inactive' }}
+          </span>
+        </div>
+        <div class="customer-details">
+          <div class="detail-item">
+            <span class="detail-label">📞 Phone:</span>
+            <span class="detail-value">{{ customer.phone }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">📅 Added:</span>
+            <span class="detail-value">{{ formatDate(customer.dateAdded) }}</span>
+          </div>
+        </div>
+        <div class="customer-stats">
+          <div class="stat">
+            <span class="stat-label">Total Udhaar:</span>
+            <span class="stat-value">₹{{ customer.totalUdhaar.toLocaleString() }}</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Received:</span>
+            <span class="stat-value">₹{{ customer.totalReceived.toLocaleString() }}</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Due Udhaar:</span>
+            <span class="stat-value outstanding">₹{{ customer.outstanding.toLocaleString() }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="customer-actions">
+        <button class="action-btn view" (click)="viewCustomer(customer)">
+          <span>👁️</span>
+          View
+        </button>
+        <button class="action-btn edit" (click)="editCustomer(customer)">
+          <span>✏️</span>
+          Edit
+        </button>
+        <button class="action-btn delete" (click)="deleteCustomer(customer)">
+          <span>🗑️</span>
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Customer Modal -->
+<div class="modal-backdrop" *ngIf="showAddModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Add New Customer</h2>
+      <button class="close-btn" (click)="closeAddModal()">&times;</button>
+    </div>
+    <form [formGroup]="addForm" (ngSubmit)="addCustomer()">
+      <div class="form-group">
+        <label for="addName">Customer Name *</label>
+        <input 
+          id="addName" 
+          type="text"
+          formControlName="name"
+          placeholder="Enter customer name"
+          [class.error]="addForm.get('name')?.invalid && addForm.get('name')?.touched"
+        />
+        <div class="error-message" *ngIf="addForm.get('name')?.invalid && addForm.get('name')?.touched">
+          {{ getErrorMessage(addForm, 'name') }}
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="addPhone">Phone Number *</label>
+        <input 
+          id="addPhone" 
+          type="tel"
+          formControlName="phone"
+          placeholder="Enter 10-11 digit phone number"
+          [class.error]="addForm.get('phone')?.invalid && addForm.get('phone')?.touched"
+        />
+        <div class="error-message" *ngIf="addForm.get('phone')?.invalid && addForm.get('phone')?.touched">
+          {{ getErrorMessage(addForm, 'phone') }}
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" (click)="closeAddModal()">Cancel</button>
+        <button type="submit" [disabled]="addForm.invalid">Add Customer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Edit Customer Modal -->
+<div class="modal-backdrop" *ngIf="showEditModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Edit Customer</h2>
+      <button class="close-btn" (click)="closeEditModal()">&times;</button>
+    </div>
+    <form [formGroup]="editForm" (ngSubmit)="saveCustomer()">
+      <div class="form-group">
+        <label for="editName">Customer Name *</label>
+        <input 
+          id="editName" 
+          type="text"
+          formControlName="name"
+          placeholder="Enter customer name"
+          [class.error]="editForm.get('name')?.invalid && editForm.get('name')?.touched"
+        />
+        <div class="error-message" *ngIf="editForm.get('name')?.invalid && editForm.get('name')?.touched">
+          {{ getErrorMessage(editForm, 'name') }}
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="editPhone">Phone Number *</label>
+        <input 
+          id="editPhone" 
+          type="tel"
+          formControlName="phone"
+          placeholder="Enter 10-11 digit phone number"
+          [class.error]="editForm.get('phone')?.invalid && editForm.get('phone')?.touched"
+        />
+        <div class="error-message" *ngIf="editForm.get('phone')?.invalid && editForm.get('phone')?.touched">
+          {{ getErrorMessage(editForm, 'phone') }}
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" (click)="closeEditModal()">Cancel</button>
+        <button type="submit" [disabled]="editForm.invalid">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal-backdrop" *ngIf="showDeleteModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Delete Customer</h2>
+      <button class="close-btn" (click)="closeDeleteModal()">&times;</button>
+    </div>
+    <div class="modal-content">
+      <p>Are you sure you want to delete <strong>{{ selectedCustomer?.name }}</strong>?</p>
+      <p class="warning">This action cannot be undone.</p>
+    </div>
+    <div class="modal-actions">
+      <button type="button" (click)="closeDeleteModal()">Cancel</button>
+      <button type="button" class="danger" (click)="confirmDelete()">Delete Customer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Transactions Modal -->
+<div class="modal-backdrop" *ngIf="showTransactionsModal">
+  <div class="modal large">
+    <div class="modal-header">
+      <h2>{{ selectedCustomer?.name }} - Transactions</h2>
+      <button class="close-btn" (click)="closeModals()">&times;</button>
+    </div>
+    <div class="modal-content">
+      <div *ngIf="customerTransactions.length === 0" class="empty-state">
+        <p>No transactions found for this customer.</p>
+      </div>
+      <div *ngFor="let transaction of customerTransactions" class="transaction-item">
+        <div class="transaction-info">
+          <h4>{{ transaction.productName }}</h4>
+          <p>{{ transaction.description }}</p>
+          <span class="transaction-date">{{ transaction.date | date:'short' }}</span>
+        </div>
+        <div class="transaction-amount">
+          <span class="amount">₹{{ transaction.amount.toLocaleString() }}</span>
+          <span class="status" [class.fulfilled]="transaction.status === 'fulfilled'">
+            {{ transaction.status === 'fulfilled' ? 'Paid' : 'Pending' }}
+          </span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button type="button" (click)="closeModals()">Close</button>
+    </div>
+  </div>
+</div>

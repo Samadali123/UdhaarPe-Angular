@@ -1,0 +1,114 @@
+<!-- Home page template will be implemented here --> 
+
+<div class="home-container" appScrollbar>
+  <div class="home-header">
+    <h1>Welcome to UdhaarPe</h1>
+    <p>Manage your udhaar transactions efficiently</p>
+  </div>
+
+  <!-- Quick Stats -->
+  <div class="quick-stats">
+    <div class="stat-card">
+      <div class="stat-icon">👥</div>
+      <div class="stat-content">
+        <div class="stat-value">{{ totalCustomers }}</div>
+        <div class="stat-label">Total Customers</div>
+        <div class="stat-subtitle">{{ activeCustomers }} Active</div>
+      </div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-icon">💰</div>
+      <div class="stat-content">
+        <div class="stat-value">₹{{ totalUdhaar.toLocaleString() }}</div>
+        <div class="stat-label">Total Udhaar</div>
+      </div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-icon">✅</div>
+      <div class="stat-content">
+        <div class="stat-value">₹{{ totalPayments.toLocaleString() }}</div>
+        <div class="stat-label">Total Payments</div>
+      </div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-icon">⏳</div>
+      <div class="stat-content">
+        <div class="stat-value outstanding">₹{{ dueUdhaar.toLocaleString() }}</div>
+        <div class="stat-label">Due Udhaar</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="quick-actions">
+    <button class="action-btn primary" (click)="navigateToCustomers()">
+      <span>➕</span>
+      Add Customer
+    </button>
+    <button class="action-btn secondary" (click)="navigateToTransactions()">
+      <span>📋</span>
+      View Transactions
+    </button>
+    <button class="action-btn secondary" (click)="navigateToDashboard()">
+      <span>📊</span>
+      View Dashboard
+    </button>
+  </div>
+
+  <!-- Recent Activity -->
+  <div class="recent-activity">
+    <div class="activity-section">
+      <div class="section-header">
+        <h2>Recent Customers</h2>
+        <button class="view-all-btn" (click)="navigateToCustomers()">View All</button>
+      </div>
+      
+      <div class="activity-list">
+        <div *ngIf="recentCustomers.length === 0" class="empty-state">
+          <p>No customers yet</p>
+        </div>
+        
+        <div *ngFor="let customer of recentCustomers" class="activity-item" (click)="navigateToCustomer(customer.id)">
+          <div class="item-info">
+            <h4>{{ customer.name }}</h4>
+            <p>{{ customer.phone }}</p>
+            <span class="item-date">{{ formatDate(customer.dateAdded) }}</span>
+          </div>
+          <div class="item-status" [class.active]="customer.active">
+            {{ customer.active ? 'Active' : 'Inactive' }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="activity-section">
+      <div class="section-header">
+        <h2>Recent Transactions</h2>
+        <button class="view-all-btn" (click)="navigateToTransactions()">View All</button>
+      </div>
+      
+      <div class="activity-list">
+        <div *ngIf="recentTransactions.length === 0" class="empty-state">
+          <p>No transactions yet</p>
+        </div>
+        
+        <div *ngFor="let transaction of recentTransactions" class="activity-item">
+          <div class="item-info">
+            <h4>{{ getCustomerName(transaction.customerId) }}</h4>
+            <p>{{ transaction.productName }}</p>
+            <span class="item-date">{{ formatDate(transaction.date) }}</span>
+          </div>
+          <div class="item-details">
+            <span class="transaction-type" [class]="transaction.type">
+              {{ transaction.type === 'udhaar' ? 'Udhaar' : 'Payment' }}
+            </span>
+            <span class="transaction-amount">₹{{ transaction.amount.toLocaleString() }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

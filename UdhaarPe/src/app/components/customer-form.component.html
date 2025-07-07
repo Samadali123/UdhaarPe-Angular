@@ -1,0 +1,53 @@
+<!-- Customer form template will be implemented here -->
+
+<!-- Add Customer Modal -->
+<div class="modal-backdrop" *ngIf="showModal" (click)="onModalBackdropClick($event)">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Add New Customer</h2>
+      <button class="close-btn" (click)="closeModal()">&times;</button>
+    </div>
+    
+    <form [formGroup]="customerForm" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label for="name">Customer Name *</label>
+        <input 
+          id="name" 
+          type="text" 
+          formControlName="name" 
+          placeholder="Enter customer name"
+          [class.error]="customerForm.get('name')?.invalid && customerForm.get('name')?.touched"
+        />
+        <div class="error-message" *ngIf="customerForm.get('name')?.invalid && customerForm.get('name')?.touched">
+          <span *ngIf="customerForm.get('name')?.errors?.['required']">Name is required</span>
+          <span *ngIf="customerForm.get('name')?.errors?.['minlength']">Name must be at least 2 characters</span>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="phone">Phone Number *</label>
+        <input 
+          id="phone" 
+          type="tel" 
+          formControlName="phone" 
+          placeholder="Enter phone number (10-11 digits)"
+          [class.error]="customerForm.get('phone')?.invalid && customerForm.get('phone')?.touched"
+        />
+        <div class="error-message" *ngIf="customerForm.get('phone')?.invalid && customerForm.get('phone')?.touched">
+          <span *ngIf="customerForm.get('phone')?.errors?.['required']">Phone number is required</span>
+          <span *ngIf="customerForm.get('phone')?.errors?.['pattern']">Please enter a valid 10-11 digit phone number</span>
+        </div>
+      </div>
+      
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" (click)="closeModal()">Cancel</button>
+        <button type="submit" class="btn-primary" [disabled]="customerForm.invalid">Add Customer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Debug info (remove in production) -->
+<div style="position: fixed; top: 10px; right: 10px; background: #333; color: white; padding: 10px; font-size: 12px; z-index: 9999;">
+  Modal State: {{ showModal ? 'OPEN' : 'CLOSED' }}
+</div> 

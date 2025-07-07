@@ -1,0 +1,209 @@
+<div class="customer-detail-container" *ngIf="customer" appScrollbar>
+  <div class="customer-detail-header">
+    <button class="back-btn" (click)="goBack()">
+      <span>←</span>
+      Back to Customers
+    </button>
+    <h1>{{ customer.name }}</h1>
+    <p>Customer Details & Transactions</p>
+  </div>
+
+  <!-- Customer Information -->
+  <div class="customer-info-section">
+    <div class="customer-card">
+      <div class="customer-basic-info">
+        <div class="info-item">
+          <span class="label">📞 Phone:</span>
+          <span class="value">{{ customer.phone }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">📅 Added:</span>
+          <span class="value">{{ formatDate(customer.dateAdded) }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Status:</span>
+          <span class="value status" [class.active]="customer.active">
+            {{ customer.active ? 'Active' : 'Inactive' }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Financial Summary -->
+    <div class="financial-summary">
+      <div class="summary-card">
+        <div class="summary-icon">💰</div>
+        <div class="summary-content">
+          <div class="summary-value">₹{{ getTotalUdhaar().toLocaleString() }}</div>
+          <div class="summary-label">Total Udhaar</div>
+        </div>
+      </div>
+      
+      <div class="summary-card">
+        <div class="summary-icon">✅</div>
+        <div class="summary-content">
+          <div class="summary-value">₹{{ getTotalReceived().toLocaleString() }}</div>
+          <div class="summary-label">Total Received</div>
+        </div>
+      </div>
+      
+      <div class="summary-card">
+        <div class="summary-icon">⏳</div>
+        <div class="summary-content">
+          <div class="summary-value outstanding">₹{{ getOutstanding().toLocaleString() }}</div>
+          <div class="summary-label">Due Udhaar</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="action-buttons">
+    <button class="action-btn add-udhaar" (click)="openAddUdhaarModal()">
+      <span>➕</span>
+      Add Udhaar
+    </button>
+    <button class="action-btn add-payment" (click)="openAddPaymentModal()">
+      <span>💰</span>
+      Record Payment
+    </button>
+  </div>
+
+  <!-- Transactions List -->
+  <div class="transactions-section">
+    <h2>Transaction History</h2>
+    
+    <div *ngIf="transactions.length === 0" class="empty-state">
+      <div class="empty-icon">📋</div>
+      <h3>No transactions found</h3>
+      <p>Add your first udhaar or payment to get started</p>
+    </div>
+
+    <div *ngFor="let transaction of transactions" class="transaction-card">
+      <div class="transaction-header">
+        <div class="transaction-type" [class]="transaction.type">
+          {{ transaction.type === 'udhaar' ? 'Udhaar' : 'Payment' }}
+        </div>
+        <div class="transaction-date">{{ formatDate(transaction.date) }}</div>
+      </div>
+      
+      <div class="transaction-content">
+        <div class="transaction-info">
+          <h4>{{ transaction.productName }}</h4>
+          <p *ngIf="transaction.description">{{ transaction.description }}</p>
+        </div>
+        <div class="transaction-amount">
+          <span class="amount">₹{{ transaction.amount.toLocaleString() }}</span>
+        </div>
+      </div>
+      
+      <div class="transaction-status" [class]="transaction.status">
+        {{ transaction.status === 'fulfilled' ? 'Completed' : 'Pending' }}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Udhaar Modal -->
+<div class="modal-backdrop" *ngIf="showAddUdhaarModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Add Udhaar</h2>
+      <button class="close-btn" (click)="closeAddUdhaarModal()">&times;</button>
+    </div>
+    <form [formGroup]="udhaarForm" (ngSubmit)="addUdhaar()">
+      <div class="form-group">
+        <label for="udhaarAmount">Amount *</label>
+        <input 
+          id="udhaarAmount" 
+          type="number" 
+          formControlName="amount"
+          placeholder="Enter amount"
+          min="0.01"
+          step="0.01"
+        />
+      </div>
+      
+      <div class="form-group">
+        <label for="udhaarProduct">Product Name *</label>
+        <input 
+          id="udhaarProduct" 
+          type="text"
+          formControlName="productName"
+          placeholder="Enter product name"
+        />
+      </div>
+      
+      <div class="form-group">
+        <label for="udhaarDescription">Description</label>
+        <textarea 
+          id="udhaarDescription" 
+          formControlName="description"
+          placeholder="Enter description (optional)"
+          rows="3"
+        ></textarea>
+      </div>
+      
+      <div class="form-group">
+        <label for="udhaarDate">Date *</label>
+        <input 
+          id="udhaarDate" 
+          type="date"
+          formControlName="date"
+        />
+      </div>
+      
+      <div class="modal-actions">
+        <button type="button" (click)="closeAddUdhaarModal()">Cancel</button>
+        <button type="submit" [disabled]="udhaarForm.invalid">Add Udhaar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Add Payment Modal -->
+<div class="modal-backdrop" *ngIf="showAddPaymentModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Record Payment</h2>
+      <button class="close-btn" (click)="closeAddPaymentModal()">&times;</button>
+    </div>
+    <form [formGroup]="paymentForm" (ngSubmit)="addPayment()">
+      <div class="form-group">
+        <label for="paymentAmount">Amount *</label>
+        <input 
+          id="paymentAmount" 
+          type="number" 
+          formControlName="amount"
+          placeholder="Enter payment amount"
+          min="0.01"
+          step="0.01"
+        />
+      </div>
+      
+      <div class="form-group">
+        <label for="paymentRemarks">Remarks</label>
+        <textarea 
+          id="paymentRemarks" 
+          formControlName="remarks"
+          placeholder="Enter remarks (optional)"
+          rows="3"
+        ></textarea>
+      </div>
+      
+      <div class="form-group">
+        <label for="paymentDate">Date *</label>
+        <input 
+          id="paymentDate" 
+          type="date"
+          formControlName="date"
+        />
+      </div>
+      
+      <div class="modal-actions">
+        <button type="button" (click)="closeAddPaymentModal()">Cancel</button>
+        <button type="submit" [disabled]="paymentForm.invalid">Record Payment</button>
+      </div>
+    </form>
+  </div>
+</div> 

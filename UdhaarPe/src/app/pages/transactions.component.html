@@ -1,0 +1,191 @@
+<div class="transactions-container" appScrollbar>
+  <div class="transactions-header">
+    <h1>Transactions</h1>
+    <p>View and manage all udhaar transactions</p>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-section">
+    <div class="filters-grid">
+      <div class="filter-group">
+        <label for="customer">Customer</label>
+        <select id="customer" [(ngModel)]="selectedCustomer" (change)="applyFilters()">
+          <option value="">All Customers</option>
+          <option *ngFor="let customer of customers" [value]="customer.id">
+            {{ customer.name }}
+          </option>
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <label for="type">Type</label>
+        <select id="type" [(ngModel)]="selectedType" (change)="applyFilters()">
+          <option value="">All Types</option>
+          <option value="udhaar">Udhaar</option>
+          <option value="payment">Payment</option>
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <label for="status">Status</label>
+        <select id="status" [(ngModel)]="selectedStatus" (change)="applyFilters()">
+          <option value="">All Status</option>
+          <option value="fulfilled">Fulfilled</option>
+          <option value="pending">Pending</option>
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <label for="dateRange">Date Range</label>
+        <select id="dateRange" [(ngModel)]="selectedDateRange" (change)="applyFilters()">
+          <option value="">All Time</option>
+          <option value="7">Last 7 days</option>
+          <option value="30">Last 30 days</option>
+          <option value="90">Last 90 days</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="filters-actions">
+      <button class="clear-filters-btn" (click)="clearFilters()">
+        <span>🗑️</span>
+        Clear Filters
+      </button>
+      <button class="import-btn" (click)="openImportModal()">
+        <span>📁</span>
+        Import
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="stats-section">
+    <div class="stat-card">
+      <div class="stat-icon">📊</div>
+      <div class="stat-content">
+        <div class="stat-value">{{ filteredTransactions.length }}</div>
+        <div class="stat-label">Total Transactions</div>
+      </div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-icon">💰</div>
+      <div class="stat-content">
+        <div class="stat-value">₹{{ getTotalUdhaar().toLocaleString() }}</div>
+        <div class="stat-label">Total Udhaar</div>
+      </div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-icon">✅</div>
+      <div class="stat-content">
+        <div class="stat-value">₹{{ getTotalPayments().toLocaleString() }}</div>
+        <div class="stat-label">Total Payments</div>
+      </div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-icon">⏳</div>
+      <div class="stat-content">
+        <div class="stat-value">₹{{ (getTotalUdhaar() - getTotalPayments()).toLocaleString() }}</div>
+        <div class="stat-label">Due Udhaar</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Transactions List -->
+  <div class="transactions-list">
+    <div *ngIf="filteredTransactions.length === 0" class="empty-state">
+      <div class="empty-icon">📋</div>
+      <h3>No transactions found</h3>
+      <p>{{ selectedCustomer || selectedStatus || selectedDateRange ? 'Try adjusting your filters' : 'Add your first transaction to get started' }}</p>
+    </div>
+
+    <div *ngFor="let transaction of filteredTransactions" class="transaction-card">
+      <div class="transaction-header">
+        <div class="transaction-customer">
+          <h3>{{ getCustomerName(transaction.customerId) }}</h3>
+          <span class="transaction-date">{{ transaction.date | date:'medium' }}</span>
+        </div>
+        <div class="transaction-status" [class.fulfilled]="transaction.status === 'fulfilled'">
+          {{ transaction.status === 'fulfilled' ? 'Fulfilled' : 'Pending' }}
+        </div>
+      </div>
+      
+      <div class="transaction-details">
+        <div class="transaction-info">
+          <h4>{{ transaction.productName }}</h4>
+          <p *ngIf="transaction.description">{{ transaction.description }}</p>
+          <span class="transaction-type" [class]="transaction.type">{{ transaction.type }}</span>
+        </div>
+        <div class="transaction-amount">
+          <span class="amount">₹{{ transaction.amount.toLocaleString() }}</span>
+        </div>
+      </div>
+      
+      <div class="transaction-actions">
+        <button class="action-btn view" (click)="viewCustomer(transaction.customerId)">
+          <span>👁️</span>
+          View Customer
+        </button>
+        <button class="action-btn edit" (click)="editTransaction(transaction)">
+          <span>✏️</span>
+          Edit
+        </button>
+        <button class="action-btn toggle-status" (click)="toggleStatus(transaction)">
+          <span>{{ transaction.status === 'fulfilled' ? '⏳' : '✅' }}</span>
+          {{ transaction.status === 'fulfilled' ? 'Mark Pending' : 'Mark Fulfilled' }}
+        </button>
+        <button class="action-btn delete" (click)="deleteTransaction(transaction)">
+          <span>🗑️</span>
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Import Modal -->
+<div class="modal-backdrop" *ngIf="showImportModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Import Transactions</h2>
+      <button class="close-btn" (click)="closeImportModal()">&times;</button>
+    </div>
+    <div class="modal-content">
+      <div class="import-instructions">
+        <h3>Instructions</h3>
+        <p>Upload a CSV file with the following columns:</p>
+        <ul>
+          <li>Customer Name</li>
+          <li>Product Name</li>
+          <li>Amount</li>
+          <li>Description (optional)</li>
+          <li>Date (YYYY-MM-DD)</li>
+        </ul>
+      </div>
+      
+      <div class="file-upload">
+        <label for="fileInput" class="file-upload-label">
+          <span>📁</span>
+          Choose File
+        </label>
+        <input 
+          id="fileInput" 
+          type="file" 
+          accept=".csv"
+          (change)="onFileSelected($event)"
+          style="display: none;"
+        />
+        <div *ngIf="importFile" class="selected-file">
+          <span>📄</span>
+          {{ importFile.name }}
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button type="button" (click)="closeImportModal()">Cancel</button>
+      <button type="button" [disabled]="!importFile" (click)="importTransactions()">Import</button>
+    </div>
+  </div>
+</div> 
